@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Aplikasi AHT · ISD · Manager — v2</title>
+  <style>
+    :root{--accent:#0f62fe;--muted:#6b7280;--bg:#f6f8fb}
+    *{box-sizing:border-box}
+    body{font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;margin:0;background:var(--bg);color:#0f172a}
+    .wrap{max-width:1200px;margin:28px auto;padding:20px}
+    .panel{background:#fff;border-radius:12px;padding:16px;box-shadow:0 6px 20px rgba(2,6,23,.06);border:1px solid #eef2ff}
+    header{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}
+    h1{font-size:18px;margin:0}
+    .tabs{display:flex;gap:8px;margin-bottom:16px}
+    .tab{padding:8px 12px;border-radius:10px;background:transparent;color:var(--muted);cursor:pointer}
+    .tab.active{background:rgba(15,98,254,.08);color:var(--accent);font-weight:600}
+    .grid{display:grid;grid-template-columns:1fr 380px;gap:16px}
+    label{display:block;font-size:13px;color:#334155;margin-bottom:6px}
+    input,select,textarea,button{font-family:inherit}
+    input[type=text],input[type=tel],select,textarea{width:100%;padding:8px;border-radius:8px;border:1px solid #e6eef8;background:#fbfdff}
+    textarea{resize:vertical}
+    button{background:var(--accent);color:#fff;padding:8px 10px;border:none;border-radius:8px;cursor:pointer}
+    .muted{color:var(--muted);font-size:13px}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th,td{padding:8px;text-align:left;border-bottom:1px solid #f1f5f9}
+    .wa-link{display:inline-block;padding:6px 8px;border-radius:8px;background:#ecfeff;color:#065f46;text-decoration:none}
+    .small{font-size:12px;color:#475569}
+    .summary{display:flex;gap:10px;flex-wrap:wrap}
+    .card{background:#fff;padding:12px;border-radius:10px;border:1px solid #eef5ff}
+    .actions button{margin-right:6px}
+    .file-label{display:inline-block;padding:6px 8px;border-radius:8px;background:#f1f5f9}
+    .top-controls{display:flex;gap:8px;align-items:center}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="panel">
+      <header>
+        <div>
+          <h1>Aplikasi AHT · ISD · Manager — v2</h1>
+          <div class="muted">Database terpisah & report terpisah — ekspor/impor JSON & CSV tersedia</div>
+        </div>
+        <div class="top-controls">
+          <button id="btnExportAllJson">Export Full Backup (JSON)</button>
+          <button id="btnImportAllJson">Import Full Backup</button>
+        </div>
+      </header>
+
+      <div class="tabs" role="tablist">
+        <div class="tab active" data-tab="aht">AHT</div>
+        <div class="tab" data-tab="isd">ISD</div>
+        <div class="tab" data-tab="manager">Manager</div>
+      </div>
+
+      <!-- AHT -->
+      <div id="aht-screen">
+        <div class="grid">
+          <div>
+            <div class="card">
+              <h3>AHT — Database Driver</h3>
+
+              <label>Impor driver (CSV: Nama,HP per baris) atau tempel</label>
+              <input type="file" id="fileCsv" accept=".csv" />
+              <textarea id="csvPaste" rows="3" placeholder="Tri Yoga,628123456789\nBudi,62812..."></textarea>
+              <div style="display:flex;gap:8px;margin-top:8px">
+                <button id="btnParse">Impor CSV</button>
+                <button id="btnExportDrivers">Export DB (JSON)</button>
+                <button id="btnImportDrivers">Import DB (JSON)</button>
+              </div>
+              <hr />
+
+              <label>Tambah driver manual</label>
+              <input id="drvName" type="text" placeholder="Nama driver" />
+              <input id="drvHp" type="tel" placeholder="HP (628...)" style="margin-top:8px" />
+              <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+                <button id="btnAddDriver">Tambah Driver</button>
+                <div class="muted small">Jumlah driver: <span id="driversCount">0</span></div>
+              </div>
+
+              <hr />
+
+              <h4>Daftar Driver</h4>
+              <div style="max-height:300px;overflow:auto;margin-top:8px">
+                <table id="driversTable"><thead><tr><th>Nama</th><th>HP</th><th></th></tr></thead><tbody></tbody></table>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="card">
+              <h3>AHT — Input Driver Ready (Report)</h3>
+              <label>Pilih driver dari database</label>
+              <select id="selectDriver"><option value="">-- pilih driver --</option></select>
+              <input id="noteReady" type="text" placeholder="Catatan (opsional)" style="margin-top:8px" />
+              <div style="display:flex;gap:8px;margin-top:8px">
+                <button id="btnAddReady">Simpan Ready</button>
+                <button id="btnAddReadyManual" style="background:#6b7280">Tambah Manual (tanpa DB)</button>
+              </div>
+
+              <hr />
+              <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">
+                <input id="searchAht" placeholder="Cari nama / hp" />
+                <button id="btnExportAhtCsv">Export AHT (CSV)</button>
+              </div>
+
+              <div style="max-height:340px;overflow:auto">
+                <table id="ahtTable"><thead><tr><th>Waktu</th><th>Nama</th><th>HP</th><th>Catatan</th><th>Status</th></tr></thead><tbody></tbody></table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ISD -->
+      <div id="isd-screen" style="display:none">
+        <div class="grid">
+          <div>
+            <div class="card">
+              <h3>ISD — Umpan balik</h3>
+              <div class="muted small">Ambil entri AHT (pending) lalu beri status</div>
+              <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+                <input id="searchIsd" placeholder="Cari di log AHT" />
+                <button id="btnExportIsdCsv">Export ISD (CSV)</button>
+                <button id="btnExportReportJson">Export Report (JSON)</button>
+                <button id="btnImportReportJson">Import Report (JSON)</button>
+              </div>
+              <div style="max-height:540px;overflow:auto;margin-top:8px">
+                <table id="isdTable"><thead><tr><th>Waktu</th><th>Nama</th><th>HP</th><th>Catatan</th><th>Action</th></tr></thead><tbody></tbody></table>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="card">
+              <h4>Ringkasan ISD</h4>
+              <div class="summary" id="isdSummary"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Manager -->
+      <div id="manager-screen" style="display:none">
+        <div class="card">
+          <h3>Manager — Resume</h3>
+          <div class="muted small">Resume dihitung ulang dari report; tidak disimpan sebagai DB</div>
+          <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+            <button id="btnExportAllCsv">Export Semua (CSV)</button>
+            <button id="btnExportDriversCsv">Export Drivers (CSV)</button>
+          </div>
+          <div style="margin-top:12px" class="summary" id="mgrSummary"></div>
+
+          <hr />
+          <h4>Detail Semua Entri</h4>
+          <div style="margin-top:8px">
+            <button id="btnDownloadAllJson">Download All (JSON)</button>
+          </div>
+          <div style="max-height:420px;overflow:auto;margin-top:8px">
+            <table id="mgrTable"><thead><tr><th>Tipe</th><th>Waktu</th><th>Nama</th><th>HP</th><th>Catatan</th><th>Status</th></tr></thead><tbody></tbody></table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Storage keys (database vs report)
+    const LS_DRIVERS = 'database_drivers_v1';
+    const LS_AHT = 'report_aht_v1';
+    const LS_ISD = 'report_isd_v1';
+
+    // Utilities
+    const qs = s => document.querySelector(s);
+    const qsa = s => document.querySelectorAll(s);
+    function load(key){try{return JSON.parse(localStorage.getItem(key)||'[]')}catch(e){return []}}
+    function save(key,arr){localStorage.setItem(key,JSON.stringify(arr||[]))}
+
+    // Init
+    function init(){ attachTabs(); renderDrivers(); renderAHT(); renderISD(); renderManager(); attachEvents(); }
+
+    // Tabs
+    function attachTabs(){ qsa('.tab').forEach(t=>t.addEventListener('click',()=>{ qsa('.tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); const tab=t.dataset.tab; qs('#aht-screen').style.display = tab==='aht'?'block':'none'; qs('#isd-screen').style.display = tab==='isd'?'block':'none'; qs('#manager-screen').style.display = tab==='manager'?'block':'none'; })) }
+
+    // Helpers
+    function escapeHtml(s){ if(!s) return ''; return s.toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
+    function normalizeHp(hp){ if(!hp) return ''; return hp.toString().replace(/[^0-9]/g,'').replace(/^0/,'62'); }
+
+    // Driver DB
+    function renderDrivers(){ const drivers = load(LS_DRIVERS); const tbody = qs('#driversTable tbody'); tbody.innerHTML=''; const sel = qs('#selectDriver'); sel.innerHTML = '<option value="">-- pilih driver --</option>';
+      drivers.forEach((d,i)=>{ const tr=document.createElement('tr'); tr.innerHTML = `<td>${escapeHtml(d.name)}</td><td>${escapeHtml(d.hp)}</td><td class="small"><a class="wa-link" href="https://wa.me/${normalizeHp(d.hp)}" target="_blank">WA</a> <button data-i="${i}" class="btnDel small">Hapus</button></td>`; tbody.appendChild(tr); const opt=document.createElement('option'); opt.value=i; opt.textContent = d.name + ' ('+d.hp+')'; sel.appendChild(opt); }); qs('#driversCount').textContent = drivers.length; qsa('.btnDel').forEach(b=>b.addEventListener('click',()=>{ const i=+b.dataset.i; const drivers=load(LS_DRIVERS); drivers.splice(i,1); save(LS_DRIVERS,drivers); renderDrivers(); })) }
+
+    function uniqueDrivers(arr){ const seen=new Map(); arr.forEach(d=>{ const k=(d.name||'')+'|'+(d.hp||''); if(!seen.has(k)) seen.set(k,{name:d.name,hp:d.hp}); }); return Array.from(seen.values()); }
+
+    // Parse CSV simple
+    function parseCsvText(text){ const lines = text.split(/\r?\n/).map(l=>l.trim()).filter(Boolean); const out=[]; for(const line of lines){ const parts = line.split(',').map(p=>p.trim()); if(parts.length>=2){ out.push({name:parts[0], hp:parts[1]}); } } return out; }
+
+    // AHT (report)
+    function renderAHT(filter=''){ const aht = load(LS_AHT); const tbody = qs('#ahtTable tbody'); tbody.innerHTML=''; aht.slice().reverse().forEach(item=>{ const combined = (item.name+' '+item.hp+' '+(item.note||'')).toLowerCase(); if(filter && combined.indexOf(filter.toLowerCase())===-1) return; const tr=document.createElement('tr'); tr.innerHTML=`<td class="small">${new Date(item.time).toLocaleString()}</td><td>${escapeHtml(item.name)}</td><td>${escapeHtml(item.hp)}</td><td class="small">${escapeHtml(item.note||'')}</td><td class="small">${item.status||'pending'}</td>`; tbody.appendChild(tr); }) }
+
+    // ISD (report)
+    function renderISD(filter=''){ const aht = load(LS_AHT); const tbody = qs('#isdTable tbody'); tbody.innerHTML=''; aht.forEach((item,i)=>{ if(item.status && item.status!=='pending' && item.status!=='new') return; const combined = (item.name+' '+item.hp+' '+(item.note||'')).toLowerCase(); if(filter && combined.indexOf(filter.toLowerCase())===-1) return; const tr=document.createElement('tr'); tr.innerHTML = `<td class="small">${new Date(item.time).toLocaleString()}</td><td>${escapeHtml(item.name)}</td><td>${escapeHtml(item.hp)}</td><td class="small">${escapeHtml(item.note||'')}</td><td class="actions small"><button data-i="${i}" data-action="ready">Ready</button><button data-i="${i}" data-action="cancel">Cancel</button><button data-i="${i}" data-action="oper">Oper Lambung</button></td>`; tbody.appendChild(tr); }); qsa('#isdTable button').forEach(b=>b.addEventListener('click',()=>{ const i=+b.dataset.i; const action=b.dataset.action; const aht=load(LS_AHT); aht[i].status = action; save(LS_AHT,aht); const isd = load(LS_ISD); isd.push({time: Date.now(), name: aht[i].name, hp: aht[i].hp, note: aht[i].note||'', status: action}); save(LS_ISD, isd); renderISD(qs('#searchIsd').value); renderAHT(qs('#searchAht').value); renderManager(); renderISDSummary(); }))
+      renderISDSummary(); }
+
+    function renderISDSummary(){ const isd = load(LS_ISD); const s={ready:0,cancel:0,oper:0}; isd.forEach(x=>{ if(x.status==='ready') s.ready++; if(x.status==='cancel') s.cancel++; if(x.status==='oper') s.oper++; }); const container = qs('#isdSummary'); container.innerHTML=''; ['ready','cancel','oper'].forEach(k=>{ const div=document.createElement('div'); div.className='card'; div.style.minWidth='120px'; div.innerHTML = `<div class="small" style="font-weight:700;text-transform:capitalize">${k}</div><div style="font-size:18px;font-weight:800;margin-top:6px">${s[k]}</div>`; container.appendChild(div); }) }
+
+    // Manager
+    function renderManager(){ const aht = load(LS_AHT); const isd = load(LS_ISD); const tbody = qs('#mgrTable tbody'); tbody.innerHTML=''; aht.forEach(x=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>AHT</td><td class="small">${new Date(x.time).toLocaleString()}</td><td>${escapeHtml(x.name)}</td><td>${escapeHtml(x.hp)}</td><td class="small">${escapeHtml(x.note||'')}</td><td class="small">${x.status||'pending'}</td>`; tbody.appendChild(tr); }); isd.forEach(x=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>ISD</td><td class="small">${new Date(x.time).toLocaleString()}</td><td>${escapeHtml(x.name)}</td><td>${escapeHtml(x.hp)}</td><td class="small">${escapeHtml(x.note||'')}</td><td class="small">${x.status}</td>`; tbody.appendChild(tr); }); const totalReady = isd.filter(i=>i.status==='ready').length; const totalCancel = isd.filter(i=>i.status==='cancel').length; const totalOper = isd.filter(i=>i.status==='oper').length; const totalPending = aht.filter(i=>!i.status||i.status==='pending').length; const container = qs('#mgrSummary'); container.innerHTML=''; [{k:'Ready',v:totalReady},{k:'Cancel',v:totalCancel},{k:'Oper Lambung',v:totalOper},{k:'Pending AHT',v:totalPending}].forEach(it=>{ const d=document.createElement('div'); d.className='card'; d.style.minWidth='140px'; d.innerHTML = `<div class="small" style="font-weight:700">${it.k}</div><div style="font-size:18px;font-weight:800;margin-top:8px">${it.v}</div>`; container.appendChild(d); }) }
+
+    // Events
+    function attachEvents(){
+      // File CSV import
+      qs('#fileCsv').addEventListener('change', async e=>{ const f=e.target.files[0]; if(!f) return; const txt = await f.text(); const parsed = parseCsvText(txt); const drivers = load(LS_DRIVERS).concat(parsed); save(LS_DRIVERS, uniqueDrivers(drivers)); renderDrivers(); qs('#fileCsv').value=''; alert('Import CSV selesai'); });
+
+      qs('#btnParse').addEventListener('click', ()=>{ const txt = qs('#csvPaste').value||''; if(!txt.trim()) return alert('Tidak ada data CSV'); const parsed = parseCsvText(txt); const drivers = load(LS_DRIVERS).concat(parsed); save(LS_DRIVERS, uniqueDrivers(drivers)); renderDrivers(); qs('#csvPaste').value=''; alert('Data CSV ditambahkan'); });
+
+      qs('#btnAddDriver').addEventListener('click', ()=>{ const name = qs('#drvName').value.trim(); const hp = qs('#drvHp').value.trim(); if(!name||!hp) return alert('Nama dan HP wajib'); const drivers = load(LS_DRIVERS); drivers.push({name,hp}); save(LS_DRIVERS, uniqueDrivers(drivers)); qs('#drvName').value=''; qs('#drvHp').value=''; renderDrivers(); });
+
+      qs('#btnAddReady').addEventListener('click', ()=>{ const sel = qs('#selectDriver'); if(!sel.value) return alert('Pilih driver dari daftar'); const idx = +sel.value; const drivers = load(LS_DRIVERS); const d = drivers[idx]; const note = qs('#noteReady').value.trim(); const aht = load(LS_AHT); aht.push({time:Date.now(), name:d.name, hp:d.hp, note, status:'pending'}); save(LS_AHT,aht); qs('#noteReady').value=''; renderAHT(); renderISD(); renderManager(); alert('Entry AHT tersimpan'); });
+
+      qs('#btnAddReadyManual').addEventListener('click', ()=>{ const name = prompt('Nama driver'); if(!name) return; const hp = prompt('HP (628...)'); if(!hp) return; const note = prompt('Catatan (opsional)')||''; const aht = load(LS_AHT); aht.push({time:Date.now(), name, hp, note, status:'pending'}); save(LS_AHT,aht); renderAHT(); renderISD(); renderManager(); alert('Entry manual tersimpan'); });
+
+      qs('#searchAht').addEventListener('input', e=>renderAHT(e.target.value));
+      qs('#searchIsd').addEventListener('input', e=>renderISD(e.target.value));
+
+      // Export / Import drivers
+      qs('#btnExportDrivers').addEventListener('click', ()=>{ const data = load(LS_DRIVERS); const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='database_drivers.json'; a.click(); URL.revokeObjectURL(url); });
+
+      qs('#btnImportDrivers').addEventListener('click', ()=>{ const input=document.createElement('input'); input.type='file'; input.accept='application/json'; input.onchange = async ev=>{ const file=ev.target.files[0]; if(!file) return; const text = await file.text(); try{ const json = JSON.parse(text); if(!Array.isArray(json)) return alert('Format file salah. Harus array driver.'); save(LS_DRIVERS,json); renderDrivers(); alert('Database driver berhasil diimport.'); }catch(err){ alert('File tidak valid'); } }; input.click(); });
+
+      // Export / Import report
+      qs('#btnExportReportJson')?.addEventListener('click', ()=>{ const report = {aht: load(LS_AHT), isd: load(LS_ISD)}; const blob = new Blob([JSON.stringify(report,null,2)],{type:'application/json'}); const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='report_data.json'; a.click(); URL.revokeObjectURL(url); });
+
+      qs('#btnImportReportJson')?.addEventListener('click', ()=>{ const input=document.createElement('input'); input.type='file'; input.accept='application/json'; input.onchange = async ev=>{ const file=ev.target.files[0]; if(!file) return; const text = await file.text(); try{ const json = JSON.parse(text); if(!json.aht || !json.isd) return alert('Format file salah. Harus berisi aht & isd.'); save(LS_AHT,json.aht); save(LS_ISD,json.isd); renderAHT(); renderISD(); renderManager(); alert('Report berhasil diimport.'); }catch(err){ alert('File tidak valid'); } }; input.click(); });
+
+      // Export CSV helpers
+      qs('#btnExportAhtCsv').addEventListener('click', ()=>{ const aht = load(LS_AHT); if(!aht.length) return alert('Tidak ada data AHT'); downloadCsv(aht.map(x=>({time:new Date(x.time).toLocaleString(), name:x.name, hp:x.hp, note:x.note, status:x.status})),'aht_export.csv'); });
+      qs('#btnExportIsdCsv').addEventListener('click', ()=>{ const isd = load(LS_ISD); if(!isd.length) return alert('Tidak ada data ISD'); downloadCsv(isd.map(x=>({time:new Date(x.time).toLocaleString(), name:x.name, hp:x.hp, note:x.note, status:x.status})),'isd_export.csv'); });
+      qs('#btnExportDriversCsv')?.addEventListener('click', ()=>{ const drivers = load(LS_DRIVERS); if(!drivers.length) return alert('Tidak ada driver'); downloadCsv(drivers.map(x=>({name:x.name,hp:x.hp})),'drivers_export.csv'); });
+
+      qs('#btnExportAllCsv').addEventListener('click', ()=>{ const aht = load(LS_AHT).map(x=>({type:'AHT',time:new Date(x.time).toLocaleString(),name:x.name,hp:x.hp,note:x.note,status:x.status})); const isd = load(LS_ISD).map(x=>({type:'ISD',time:new Date(x.time).toLocaleString(),name:x.name,hp:x.hp,note:x.note,status:x.status})); const all = aht.concat(isd); if(!all.length) return alert('Tidak ada data'); downloadCsv(all,'all_export.csv'); });
+
+      qs('#btnDownloadAllJson').addEventListener('click', ()=>{ const data = {drivers: load(LS_DRIVERS), aht: load(LS_AHT), isd: load(LS_ISD)}; const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='backup_full.json'; a.click(); URL.revokeObjectURL(url); });
+
+      qs('#btnExportAllJson').addEventListener('click', ()=>{ qs('#btnDownloadAllJson').click(); });
+      qs('#btnImportAllJson').addEventListener('click', ()=>{ const input=document.createElement('input'); input.type='file'; input.accept='application/json'; input.onchange = async ev=>{ const file=ev.target.files[0]; if(!file) return; const text = await file.text(); try{ const json = JSON.parse(text); if(!json.drivers || !json.aht || !json.isd) return alert('File backup harus berisi drivers, aht, dan isd'); save(LS_DRIVERS,json.drivers); save(LS_AHT,json.aht); save(LS_ISD,json.isd); renderDrivers(); renderAHT(); renderISD(); renderManager(); alert('Full backup berhasil diimport'); }catch(err){ alert('File tidak valid') } }; input.click(); });
+
+      // initial render after import actions
+      renderISDSummary();
+    }
+
+    // CSV download util
+    function downloadCsv(rows, filename){ if(!rows||!rows.length) return; const keys = Object.keys(rows[0]||{}); const lines = [keys.join(',')]; rows.forEach(r=>{ lines.push(keys.map(k=>`"${(r[k]||'').toString().replace(/"/g,'""')}"`).join(',')); }); const blob = new Blob([lines.join('\n')],{type:'text/csv'}); const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=filename||'export.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); }
+
+    // Start app
+    init();
+  </script>
+</body>
+</html>
