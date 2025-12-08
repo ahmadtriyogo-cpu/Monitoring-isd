@@ -251,7 +251,8 @@ fileInput.addEventListener('change', async (e)=>{
   }
 });
 function parseCSV(text){
-  const lines = text.split(/?
+  const lines = text.split(/
+?
 /).filter(l=>l.trim());
   const headers = lines[0].split(/,|;|	/).map(h=>h.trim().toLowerCase());
   for(let i=1;i<lines.length;i++){ const cols = lines[i].split(/,|;|	/); if(cols.length===0) continue; const obj={}; headers.forEach((h,idx)=>obj[h]=cols[idx]||''); const n=obj.nama||obj.name||obj.nama_driver||obj.NAMA||obj.Name; const p=obj.phone||obj.hp||obj.no_hp||obj.phone_number; drivers.push({id:uid(),name:n||('Row '+i),phone:p||'',shift:'',status:'--'}); }
