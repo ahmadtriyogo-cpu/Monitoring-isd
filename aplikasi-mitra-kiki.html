@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Aplikasi Mitra — Kiki</title>
+  <style>
+    :root{--accent:#0f62fe;--muted:#666;--pagi:#f6c85f;--malam:#6fb3ff}
+    body{font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial; margin:0;padding:20px;background:#f4f6fb;color:#0b1220}
+    .app{max-width:980px;margin:0 auto}
+    .top{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+    h1{font-size:18px;margin:0}
+    .card{background:#fff;border-radius:10px;padding:12px;box-shadow:0 6px 18px rgba(11,17,32,0.06);margin-bottom:12px}
+    .row{display:flex;gap:8px;flex-wrap:wrap}
+    input,select,button,textarea{padding:8px 10px;border-radius:8px;border:1px solid #e6e9ef;font-size:14px}
+    input[type=search]{flex:1}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:8px 10px;border-bottom:1px solid #eef2f6;text-align:left}
+    .btn{background:var(--accent);color:#fff;border:none;padding:8px 12px;border-radius:8px;cursor:pointer}
+    .btn.ghost{background:transparent;color:var(--accent);border:1px solid rgba(15,98,254,0.12)}
+    .small{padding:6px 8px;font-size:13px}
+    .muted{color:var(--muted);font-size:13px}
+    .flex-right{display:flex;gap:8px;align-items:center;margin-left:auto}
+    .badge{display:inline-block;padding:4px 8px;border-radius:999px;font-size:12px}
+    .b-pagi{background:linear-gradient(90deg,var(--pagi),#f2b500)}
+    .b-malam{background:linear-gradient(90deg,var(--malam),#2b90ff)}
+    pre{white-space:pre-wrap;word-break:break-word}
+    @media (max-width:800px){.row{flex-direction:column}.flex-right{margin-left:0}}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="top">
+      <h1>Aplikasi Mitra — Kiki</h1>
+      <div class="muted">Versi HTML single-file — jalankan di browser</div>
+    </div>
+
+    <div class="card">
+      <strong>Form Input Mitra</strong>
+      <div class="row" style="margin-top:8px">
+        <input id="name" placeholder="Nama PIC / Driver" />
+        <input id="phone" placeholder="No HP (08xxx / +628xxx)" />
+        <select id="group">
+          <option value="Koperasi">Koperasi</option>
+          <option value="AHT Grup 1">AHT Grup 1</option>
+          <option value="AHT Grup 2">AHT Grup 2</option>
+          <option value="Batangan">Batangan</option>
+          <option value="Substitusi">Substitusi</option>
+        </select>
+        <input type="date" id="date" />
+        <select id="shift"><option>Pagi</option><option>Malam</option></select>
+        <button class="btn small" id="save">Simpan</button>
+      </div>
+      <div style="margin-top:8px" class="muted">Data disimpan di browser. Gunakan aplikasi ini untuk membuat daftar mitra pagi/malam.</div>
+      <div style="margin-top:8px">
+        <input type="file" id="importCsv" accept=".csv" /> <button class="small btn ghost" id="doImport">Import CSV</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:8px">
+        <input id="filter" placeholder="Cari nama / no hp / grup / tanggal" />
+        <div class="flex-right">
+          <button class="btn small" id="selectAll">Pilih Semua</button>
+          <button class="btn small" id="clearAll">Batal Pilih</button>
+          <button class="btn small" id="makePagi">Buat Mitra Pagi</button>
+          <button class="btn small" id="makeMalam">Buat Mitra Malam</button>
+          <button class="btn ghost small" id="export">Export CSV</button>
+        </div>
+      </div>
+
+      <div style="margin-top:10px;overflow:auto;max-height:380px">
+        <table id="table">
+          <thead><tr><th></th><th>Nama</th><th>HP</th><th>Grup</th><th>Tgl</th><th>Shift</th><th>Aksi</th></tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+        <div class="muted">Centang lalu klik "Buat Mitra Pagi/Malam" untuk menggabungkan.</div>
+        <div class="muted">Total: <span id="count">0</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <strong>Hasil</strong>
+      <div style="margin-top:8px">
+        <textarea id="result" rows="6" style="width:100%;padding:8px;border-radius:8px;border:1px solid #eef2f6;font-family:monospace" readonly></textarea>
+      </div>
+      <div style="margin-top:8px;display:flex;gap:8px">
+        <button class="btn" id="copy">Salin</button>
+        <button class="btn ghost" id="download">Download .txt</button>
+        <button class="btn ghost" id="wa">Buka WhatsApp</button>
+      </div>
+      <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+        <input type="date" id="historyDate" />
+        <select id="historyKind"><option value="Pagi">Pagi</option><option value="Malam">Malam</option></select>
+        <button class="small btn ghost" id="loadHistory">Load History</button>
+        <button class="small btn ghost" id="delHistory">Hapus History</button>
+      </div>
+    </div>
+
+    <footer style="margin-top:10px" class="muted">Aplikasi siap pakai. Jika ingin saya bungkus jadi file .zip untuk deploy, bilang saja.</footer>
+  </div>
+
+  <script>
+    // App logic (single file) with WhatsApp, Import/Export CSV, duplicate checks, history
+    const LS = 'kiki_mitra_app_v1'
+    const HIST = 'kiki_mitra_history_v1'
+    let store = JSON.parse(localStorage.getItem(LS) || '[]')
+
+    const $ = id=>document.getElementById(id)
+    const nameIn = $('name'), phoneIn=$('phone'), groupIn=$('group'), dateIn=$('date'), shiftIn=$('shift')
+    const tbody=$('tbody'), filter=$('filter'), countEl=$('count'), result=$('result')
+
+    function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+    function saveStore(){ localStorage.setItem(LS, JSON.stringify(store)) }
+
+    function validPhone(p){ const c=p.replace(/[^0-9+]/g,''); return /^(08\d{7,12}|\+628\d{7,12})$/.test(c) }
+
+    function render(q=''){
+      const qq=(q||'').toLowerCase(); tbody.innerHTML=''; let c=0
+      store.forEach(item=>{
+        if(qq && !(item.name.toLowerCase().includes(qq) || item.phone.includes(qq) || (item.group||'').toLowerCase().includes(qq) || (item.date||'').includes(qq))) return
+        c++
+        const tr=document.createElement('tr')
+        tr.innerHTML = `<td><input type=checkbox data-id="${item.id}" ${item.checked? 'checked':''}></td>
+          <td>${escape(item.name)}</td><td>${escape(item.phone)}</td><td>${escape(item.group)}</td>
+          <td>${escape(item.date||'')}</td><td>${item.shift? '<span class="badge '+(item.shift==='Pagi'?'b-pagi':'b-malam')+'">'+escape(item.shift)+'</span>':''}</td>
+          <td><button data-act=edit data-id="${item.id}" class="small">Edit</button> <button data-act=del data-id="${item.id}" class="small">Hapus</button></td>`
+        tbody.appendChild(tr)
+        tr.querySelector('input[type=checkbox]').addEventListener('change',e=>{ const id=e.target.dataset.id; const it=store.find(x=>x.id===id); if(it) it.checked=e.target.checked; saveStore(); updateCount() })
+      })
+      countEl.textContent=c
+    }
+
+    function updateCount(){ countEl.textContent = store.length }
+
+    function escape(s){ return (s||'').toString().replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'':'&#39;"}[c])) }
+
+    // add
+    $('save').addEventListener('click', ()=>{
+      const name=nameIn.value.trim(), phone=phoneIn.value.trim(), group=groupIn.value, date=dateIn.value, shift=shiftIn.value
+      if(!name || !phone || !date) return alert('Nama, HP, dan tanggal wajib diisi')
+      if(!validPhone(phone)) return alert('Nomor HP tidak valid. Gunakan 08xxx atau +628xxx')
+      const dup = store.find(d=>d.name.toLowerCase()===name.toLowerCase() && d.date===date && d.shift===shift)
+      if(dup && !confirm('Sudah ada input yang sama untuk tanggal & shift ini. Lanjutkan?')) return
+      const phoneDup = store.find(d=> d.phone.replace(/[^0-9]/g,'') === phone.replace(/[^0-9]/g,''))
+      if(phoneDup && !confirm('Nomor HP ini sudah digunakan oleh '+phoneDup.name+'. Lanjutkan?')) return
+      store.push({id:uid(), name, phone, group, date, shift, checked:false})
+      saveStore(); render(filter.value); nameIn.value=''; phoneIn.value=''; dateIn.value=''
+    })
+
+    // edit / del via delegation
+    tbody.addEventListener('click', e=>{
+      const btn=e.target; if(!btn.dataset) return
+      const id=btn.dataset.id, act=btn.dataset.act
+      if(act==='edit'){ const it=store.find(x=>x.id===id); if(it){ nameIn.value=it.name; phoneIn.value=it.phone; groupIn.value=it.group; dateIn.value=it.date; shiftIn.value=it.shift; if(confirm('Edit akan menghapus entry lama dari daftar. Klik OK lalu Simpan untuk menyimpan perubahan.')){ store=store.filter(x=>x.id!==id); saveStore(); render(filter.value) } } }
+      if(act==='del'){ if(confirm('Hapus entry ini?')){ store=store.filter(x=>x.id!==id); saveStore(); render(filter.value) } }
+    })
+
+    // select / deselect
+    $('selectAll').addEventListener('click', ()=>{ store.forEach(s=>s.checked=true); saveStore(); render(filter.value) })
+    $('clearAll').addEventListener('click', ()=>{ store.forEach(s=>s.checked=false); saveStore(); render(filter.value) })
+
+    function build(kind){ const sel = store.filter(s=>s.checked); if(!sel.length) return alert('Pilih minimal 1 entry')
+      const lines = sel.map((s,i)=>`${i+1}. ${s.name} — ${s.phone} (${s.group}) [${s.date} ${s.shift}]`)
+      const header = `Mitra ${kind.toUpperCase()} — ${new Date().toLocaleString('id-ID')}`
+      result.value = header + '\n' + lines.join('\n')
+      // save history by today
+      try{
+        const hist = JSON.parse(localStorage.getItem(HIST) || '{}')
+        const today = new Date().toISOString().slice(0,10)
+        const key = `${today}_${kind}`
+        hist[key] = { created: new Date().toISOString(), list: sel }
+        localStorage.setItem(HIST, JSON.stringify(hist))
+      }catch(e){ console.warn('Gagal simpan history', e) }
+    }
+
+    $('makePagi').addEventListener('click', ()=> build('Pagi'))
+    $('makeMalam').addEventListener('click', ()=> build('Malam'))
+
+    $('copy').addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(result.value); alert('Tersalin') }catch(e){ alert('Gagal salin') } })
+    $('download').addEventListener('click', ()=>{ const blob=new Blob([result.value],{type:'text/plain'}); const u=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=u; a.download='mitra.txt'; a.click(); URL.revokeObjectURL(u) })
+    $('wa').addEventListener('click', ()=>{ const t=encodeURIComponent(result.value||'Mitra list'); const url = /Android|iPhone|iPad|iPod/.test(navigator.userAgent)? `https://wa.me/?text=${t}`:`https://web.whatsapp.com/send?text=${t}`; window.open(url,'_blank') })
+
+    // export CSV
+    $('export').addEventListener('click', ()=>{
+      const rows=[['Nama','NoHP','Grup','Tanggal','Shift']].concat(store.map(s=>[s.name,s.phone,s.group,s.date,s.shift]))
+      const csv = rows.map(r=>r.map(c=>`"${(c||'').toString().replace(/"/g,'""')}"`).join(',')).join('\n')
+      const b=new Blob([csv],{type:'text/csv'}); const u=URL.createObjectURL(b); const a=document.createElement('a'); a.href=u; a.download='mitra.csv'; a.click(); URL.revokeObjectURL(u)
+    })
+
+    // import CSV (Nama,NoHP,Grup,Tanggal,Shift)
+    $('doImport').addEventListener('click', ()=>{
+      const f = document.getElementById('importCsv').files[0]
+      if(!f) return alert('Pilih file CSV terlebih dulu')
+      const reader = new FileReader()
+      reader.onload = e=>{
+        const text = e.target.result
+        const lines = text.split(/\r?\n/).filter(Boolean)
+        let added=0
+        for(const line of lines){
+          const parts = line.split(',').map(p=>p.replace(/^\s*"|"\s*$/g,'').trim())
+          if(parts.length<5) continue
+          const [n,p,g,d,s] = parts
+          const exists = store.find(x=> x.name.toLowerCase()===n.toLowerCase() && x.date===d && x.shift===s)
+          if(!exists){ store.push({id:uid(), name:n, phone:p, group:g, date:d, shift:s, checked:false}); added++ }
+        }
+        saveStore(); render(); alert('Import selesai. Added: '+added)
+      }
+      reader.readAsText(f)
+    })
+
+    // history load / delete
+    $('loadHistory').addEventListener('click', ()=>{
+      const d=$('historyDate').value; const k=$('historyKind').value
+      if(!d) return alert('Pilih tanggal history')
+      const hist = JSON.parse(localStorage.getItem(HIST) || '{}')
+      const key = `${d}_${k}`
+      if(!hist[key]) return alert('Tidak ada history untuk tanggal & jenis itu')
+      const arr = hist[key].list
+      const lines = arr.map((s,i)=>`${i+1}. ${s.name} — ${s.phone} (${s.group}) [${s.date||''} ${s.shift||''}]`)
+      result.value = `History ${k} / ${d}\n` + lines.join('\n')
+    })
+    $('delHistory').addEventListener('click', ()=>{
+      const d=$('historyDate').value; const k=$('historyKind').value
+      if(!d) return alert('Pilih tanggal history')
+      const hist = JSON.parse(localStorage.getItem(HIST) || '{}')
+      const key = `${d}_${k}`
+      if(!hist[key]) return alert('Tidak ada history untuk tanggal & jenis itu')
+      if(!confirm('Hapus history '+key+' ?')) return
+      delete hist[key]
+      localStorage.setItem(HIST, JSON.stringify(hist))
+      alert('History dihapus')
+    })
+
+    // filter
+    filter.addEventListener('input', ()=> render(filter.value))
+
+    // initial render
+    render()
+  </script>
+</body>
+</html>
