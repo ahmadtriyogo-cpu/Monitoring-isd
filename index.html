@@ -195,7 +195,8 @@
     function uid(){return Math.random().toString(36).slice(2,9)}
     function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
     function phoneToWa(p){ if(!p) return ''; let s=(p||'').toString().replace(/[^0-9]/g,''); if(s.startsWith('0')) s='62'+s.slice(1); if(!s.startsWith('62')) s='62'+s; return s; }
-    function csvToRows(txt){ return txt.split(/?
+    function csvToRows(txt){ return txt.split(/
+?
 /).map(r=>r.trim()).filter(Boolean).map(r=>r.split(',').map(c=>c.replace(/^\"|\"$/g,'').trim())); }
     function download(name,content){ const b=new Blob([content],{type:'text/plain'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=name; a.click(); URL.revokeObjectURL(a.href); }
 
