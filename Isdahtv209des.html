@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Aplikasi Substitusi Driver — V2</title>
+  <style>
+    :root{--bg:#f7fafc;--card:#fff;--accent:#075985}
+    body{font-family:Inter, system-ui, Arial;margin:0;background:var(--bg);padding:14px}
+    .app{max-width:980px;margin:0 auto}
+    header{display:flex;align-items:center;gap:12px}
+    h1{font-size:18px;margin:0}
+    nav{display:flex;gap:8px;margin-top:12px}
+    .tab{padding:8px 12px;border-radius:8px;background:#e6eefc;color:#0b3c91;cursor:pointer}
+    .tab.active{background:var(--accent);color:#fff}
+    .card{background:var(--card);padding:12px;border-radius:10px;margin-top:12px;box-shadow:0 1px 4px rgba(0,0,0,0.06)}
+    label{font-size:13px;color:#374151}
+    input,select,textarea,button{font-size:14px}
+    input,select,textarea{padding:8px;border:1px solid #e6edf3;border-radius:8px}
+    .row{display:flex;gap:10px;flex-wrap:wrap}
+    .col{flex:1}
+    .btn{background:var(--accent);color:#fff;padding:8px 10px;border-radius:8px;border:none;cursor:pointer}
+    .btn.ghost{background:#f3f4f6;color:#111}
+    .muted{color:#6b7280;font-size:13px}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:8px;border-bottom:1px solid #eef2f6;text-align:left}
+    .phone{color:var(--accent);text-decoration:none}
+    /* mobile-friendly card list for ISD */
+    .card-list{display:grid;grid-template-columns:1fr;gap:8px}
+    .isd-card{border:1px solid #e6eefc;padding:10px;border-radius:8px;background:#fff}
+    .history{background:#f8fafc;border-left:4px solid #c7f9cc;padding:8px;margin-top:8px;border-radius:6px}
+    @media(min-width:800px){ .card-list{grid-template-columns:1fr 1fr} }
+    .small{font-size:13px}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>Aplikasi Substitusi Driver — V2</h1>
+      <div class="muted">(Search DB, tanggal, klik WA, mobile-friendly ISD, history/stamps)</div>
+    </header>
+
+    <nav id="nav"></nav>
+
+    <!-- AHT -->
+    <div class="card" id="ahtTab" style="display:none">
+      <h3>AHT — Database & Substitusi</h3>
+      <div class="card" style="margin-top:10px">
+        <label class="small">Upload CSV Database Driver</label>
+        <input type="file" id="csvIn" accept=".csv" />
+        <div class="row" style="margin-top:8px">
+          <button class="btn" id="loadCsv">Load CSV (simpan local)</button>
+          <button class="btn ghost" id="exportDb">Export DB</button>
+          <button class="btn ghost" id="clearDb">Clear DB</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:10px">
+        <label class="small">Cari Database</label>
+        <div class="row" style="margin-top:6px">
+          <input id="dbSearch" placeholder="Cari nama, nomor, no lambung..." />
+          <button class="btn ghost" id="clearSearch">Clear</button>
+        </div>
+        <div id="dbTable" style="margin-top:10px;max-height:260px;overflow:auto"></div>
+      </div>
+
+      <div class="card" style="margin-top:10px">
+        <h4>Input Manual Substitusi</h4>
+        <div class="row">
+          <div class="col"><input id="manualName" placeholder="Nama pengganti" /></div>
+          <div style="width:160px"><input id="manualPhone" placeholder="No HP (08...)" /></div>
+          <div style="width:140px"><select id="manualShift"><option value="pagi">Pagi</option><option value="malam">Malam</option></select></div>
+          <div style="width:180px"><input type="date" id="manualDate" /></div>
+        </div>
+        <div style="margin-top:8px" class="row">
+          <button class="btn" id="addManual">Tambah Manual</button>
+          <button class="btn ghost" id="clearManual">Bersihkan</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:10px">
+        <h4>List Substitusi (hari terpilih)</h4>
+        <div class="row">
+          <div style="width:160px"><label class="small">Tanggal</label><input type="date" id="subsDate" /></div>
+          <div style="width:160px"><label class="small">Shift</label><select id="subsShift"><option value="pagi">Pagi</option><option value="malam">Malam</option></select></div>
+          <div class="col" style="display:flex;align-items:flex-end;gap:8px"><button class="btn" id="processChecked">Proses Checkbox → Substitusi</button><button class="btn ghost" id="copySubs">Copy Format WA</button><button class="btn ghost" id="openAllSubs">Open Semua WA</button></div>
+        </div>
+        <div id="subsList" style="margin-top:10px"></div>
+      </div>
+    </div>
+
+    <!-- ISD -->
+    <div class="card" id="isdTab" style="display:none">
+      <h3>ISD — Tindak Lanjut</h3>
+      <div class="card" style="margin-top:8px">
+        <h4>Ambil dari AHT</h4>
+        <div id="takeFromAht"></div>
+      </div>
+
+      <div class="card" style="margin-top:8px">
+        <h4>List ISD (mobile-friendly)</h4>
+        <div id="isdCards" class="card-list"></div>
+        <div style="margin-top:8px;display:flex;gap:8px"><button class="btn" id="copyIsd">Copy WA ISD</button><button class="btn ghost" id="openAllIsd">Open All WA</button><button class="btn ghost" id="exportIsd">Export ISD</button></div>
+      </div>
+    </div>
+
+    <!-- Manager -->
+    <div class="card" id="mgrTab" style="display:none">
+      <h3>Manager — Rangkuman</h3>
+      <div class="row" style="align-items:end">
+        <div style="width:200px"><label class="small">Tanggal</label><input type="date" id="mgrDate" /></div>
+        <div><button class="btn" id="genMgr">Generate</button><button class="btn ghost" id="exportMgr">Export .txt</button></div>
+      </div>
+      <div id="mgrReport" style="margin-top:12px"></div>
+    </div>
+
+    <div style="margin-top:12px" class="muted small">Semua data disimpan di <strong>localStorage</strong>. Untuk multi-device, export/import CSV.</div>
+  </div>
+
+  <script>
+    // Store
+    const KEY = 'AHT_ISD_V2_STORE';
+    let store = { db:[], subs:[], isd:[] };
+    function save(){ localStorage.setItem(KEY, JSON.stringify(store)); }
+    function load(){ const s = localStorage.getItem(KEY); if(s) store = JSON.parse(s); renderAll(); }
+
+    // Utilities
+    function uid(){return Math.random().toString(36).slice(2,9)}
+    function phoneToWa(p){ if(!p) return ''; let s = (p||'').toString().replace(/[^0-9]/g,''); if(s.startsWith('0')) s='62'+s.slice(1); if(!s.startsWith('62')) s='62'+s; return s; }
+    function csvToRows(txt){ return txt.split(/\r?\n/).map(r=>r.trim()).filter(Boolean).map(r=>{ const cols = r.split(','); return cols.map(c=>c.replace(/^"|"$/g,'').trim()); }); }
+    function download(name,content){ const b = new Blob([content],{type:'text/plain'}); const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download=name; a.click(); URL.revokeObjectURL(a.href); }
+
+    // Tabs
+    const tabs = ['aht','isd','mgr']; const nav = document.getElementById('nav'); tabs.forEach(t=>{ const el = document.createElement('div'); el.className='tab'; el.innerText = t.toUpperCase(); el.id='tab-'+t; el.addEventListener('click', ()=>{ switchTab(t); }); nav.appendChild(el); });
+    function switchTab(t){ tabs.forEach(x=>{ document.getElementById(x+'Tab').style.display='none'; document.getElementById('tab-'+x).classList.remove('active'); }); document.getElementById(t+'Tab').style.display='block'; document.getElementById('tab-'+t).classList.add('active'); }
+    switchTab('aht');
+
+    // --- AHT logic ---
+    document.getElementById('loadCsv').addEventListener('click', ()=>{
+      const f = document.getElementById('csvIn').files[0]; if(!f){alert('Pilih CSV');return} const r = new FileReader(); r.onload = ()=>{ try{ const rows = csvToRows(r.result); const parsed = []; rows.forEach(row=>{ if(row.length>=2) parsed.push({id:uid(), nama:row[0], telepon:row[1], no_lambung:row[2]||'', status:row[3]||''}) }); store.db = parsed; save(); renderDb(); alert('DB di-load'); }catch(e){alert('Error CSV:'+e.message)} }; r.readAsText(f,'utf-8'); });
+    document.getElementById('exportDb').addEventListener('click', ()=>{ if(store.db.length===0){alert('DB kosong');return} const head='nama,telepon,no_lambung,status\n'; const rows = store.db.map(d=>`${quote(d.nama)},${quote(d.telepon)},${quote(d.no_lambung||'')},${quote(d.status||'')}`).join('\n'); download('db_drivers.csv', head+rows); });
+    document.getElementById('clearDb').addEventListener('click', ()=>{ if(confirm('Hapus DB lokal?')){ store.db=[]; save(); renderDb(); }});
+
+    function quote(s){ return '"'+(s||'').replace(/"/g,'""')+'"' }
+
+    // Search DB
+    document.getElementById('dbSearch').addEventListener('input', ()=>renderDb());
+    document.getElementById('clearSearch').addEventListener('click', ()=>{ document.getElementById('dbSearch').value=''; renderDb(); });
+
+    function renderDb(){ const wrap = document.getElementById('dbTable'); const q = (document.getElementById('dbSearch').value||'').toLowerCase(); if(store.db.length===0){ wrap.innerHTML='<div class="muted">DB kosong</div>'; return }
+      let html = '<table><thead><tr><th></th><th>Nama</th><th>Telepon</th><th>No Lambung</th><th>Status</th></tr></thead><tbody>';
+      store.db.forEach((d,i)=>{ if(q && !(d.nama||'').toLowerCase().includes(q) && !(d.telepon||'').toLowerCase().includes(q) && !(d.no_lambung||'').toLowerCase().includes(q)) return; html+=`<tr><td><input type="checkbox" class="db-chk" data-idx="${i}" /></td><td>${esc(d.nama)}</td><td><a class="phone" href="https://wa.me/${phoneToWa(d.telepon)}" target="_blank">${esc(d.telepon)}</a></td><td>${esc(d.no_lambung)}</td><td>${esc(d.status)}</td></tr>` }); html+='</tbody></table>'; wrap.innerHTML = html; }
+
+    // Manual add
+    document.getElementById('addManual').addEventListener('click', ()=>{
+      const n = document.getElementById('manualName').value.trim(); const p = document.getElementById('manualPhone').value.trim(); const sh = document.getElementById('manualShift').value; const dt = document.getElementById('manualDate').value||new Date().toISOString().slice(0,10);
+      if(!n||!p){alert('Isi nama & hp');return} store.subs.push({ id: uid(), nama:n, telepon:p, shift:sh, date:dt, ready:true }); save(); renderSubs(); document.getElementById('manualName').value=''; document.getElementById('manualPhone').value=''; });
+    document.getElementById('clearManual').addEventListener('click', ()=>{ document.getElementById('manualName').value=''; document.getElementById('manualPhone').value=''; });
+
+    // Process checked to subs
+    document.getElementById('processChecked').addEventListener('click', ()=>{
+      const checks = Array.from(document.querySelectorAll('.db-chk:checked')).map(c=>Number(c.getAttribute('data-idx')));
+      if(checks.length===0){alert('Pilih DB');return}
+      const dt = document.getElementById('subsDate').value||new Date().toISOString().slice(0,10); const sh = document.getElementById('subsShift').value;
+      checks.forEach(i=>{ const d = store.db[i]; if(d) store.subs.push({id:uid(), nama:d.nama, telepon:d.telepon, shift:sh, date:dt, ready:true}) }); save(); renderSubs(); renderDb(); alert('Diproses ke substitusi'); });
+
+    document.getElementById('subsDate').value = new Date().toISOString().slice(0,10);
+
+    function renderSubs(){ const wrap = document.getElementById('subsList'); const dt = document.getElementById('subsDate').value; const sh = document.getElementById('subsShift').value; const list = store.subs.filter(s=>s.date===dt && s.shift===sh);
+      if(list.length===0){ wrap.innerHTML='<div class="muted">Kosong</div>'; return }
+      let html = '<table><thead><tr><th>Nama</th><th>HP</th><th>Shift</th><th>Tgl</th><th>Aksi</th></tr></thead><tbody>';
+      list.forEach(s=>{ html+=`<tr data-id="${s.id}"><td>${esc(s.nama)}</td><td><a class="phone" href="https://wa.me/${phoneToWa(s.telepon)}" target="_blank">${esc(s.telepon)}</a></td><td>${esc(s.shift)}</td><td>${esc(s.date)}</td><td><button class="btn" data-id="${s.id}" data-act="toIsd">Kirim ke ISD</button> <button class="btn ghost" data-id="${s.id}" data-act="delSub">Hapus</button></td></tr>` });
+      html += '</tbody></table>'; wrap.innerHTML = html;
+      wrap.querySelectorAll('button[data-act="toIsd"]').forEach(b=>{ b.addEventListener('click', ()=>{ const id=b.getAttribute('data-id'); const s = store.subs.find(x=>x.id===id); if(s){ store.isd.push({id:uid(), from:s.id, nama:s.nama, telepon:s.telepon, shift:s.shift, date:s.date, status:'pending', no_lambung:'', history:[]}); save(); renderIsdCards(); alert('Dikirim ke ISD') } }); });
+      wrap.querySelectorAll('button[data-act="delSub"]').forEach(b=>{ b.addEventListener('click', ()=>{ if(!confirm('Hapus substitusi?')) return; const id=b.getAttribute('data-id'); store.subs = store.subs.filter(x=>x.id!==id); save(); renderSubs(); }); });
+    }
+
+    document.getElementById('copySubs').addEventListener('click', ()=>{ const dt=document.getElementById('subsDate').value||new Date().toISOString().slice(0,10); const sh=document.getElementById('subsShift').value; const list = store.subs.filter(s=>s.date===dt && s.shift===sh); if(list.length===0){alert('Kosong');return} const lines = [`LIST DRIVER SUBSTITUSI - SHIFT ${sh.toUpperCase()} (${format(dt)})`]; list.forEach((s,i)=>lines.push(`${i+1}. ${s.nama} - ${s.telepon} - READY`)); navigator.clipboard.writeText(lines.join('\n')).then(()=>alert('Disalin ke clipboard')); });
+    document.getElementById('openAllSubs').addEventListener('click', ()=>{ const dt=document.getElementById('subsDate').value||new Date().toISOString().slice(0,10); const sh=document.getElementById('subsShift').value; const list = store.subs.filter(s=>s.date===dt && s.shift===sh); if(list.length===0){alert('Kosong');return} list.forEach(s=>{ const p=phoneToWa(s.telepon); const txt=encodeURIComponent(`Halo ${s.nama}, Anda tercatat READY untuk shift ${s.shift} (${format(s.date)})`); window.open(`https://wa.me/${p}?text=${txt}`,'_blank'); }); });
+
+    // --- ISD logic ---
+    function renderTakeFromAht(){ const wrap = document.getElementById('takeFromAht'); const possible = store.subs.slice(-30); if(possible.length===0){ wrap.innerHTML='<div class="muted">Tidak ada data AHT</div>'; return } let html='<table><thead><tr><th>Nama</th><th>HP</th><th>Shift</th><th>Tgl</th><th></th></tr></thead><tbody>'; possible.forEach(s=>{ html+=`<tr><td>${esc(s.nama)}</td><td><a class="phone" href="https://wa.me/${phoneToWa(s.telepon)}" target="_blank">${esc(s.telepon)}</a></td><td>${esc(s.shift)}</td><td>${esc(s.date)}</td><td><button class="btn" data-id="${s.id}" data-act="take">Ambil</button></td></tr>` }); html+='</tbody></table>'; wrap.innerHTML = html; wrap.querySelectorAll('button[data-act="take"]').forEach(b=>{ b.addEventListener('click', ()=>{ const id=b.getAttribute('data-id'); const s = store.subs.find(x=>x.id===id); if(!s) return; store.isd.push({ id: uid(), fromSubId: s.id, nama:s.nama, telepon:s.telepon, shift:s.shift, date:s.date, status:'naik armada', no_lambung:'', history:[ {ts:new Date().toISOString(), team:'AHT', note:'dikirim ke ISD', status:'naik armada'} ] }); save(); renderIsdCards(); alert('Diambil ke ISD') }) }); }
+
+    function renderIsdCards(){ const wrap = document.getElementById('isdCards'); if(store.isd.length===0){ wrap.innerHTML='<div class="muted">Kosong</div>'; return } wrap.innerHTML=''; store.isd.forEach(item=>{
+      const div = document.createElement('div'); div.className='isd-card';
+      div.innerHTML = `<div style="display:flex;align-items:center;gap:8px"><div style="flex:1"><strong>${esc(item.nama)}</strong><div class="muted small">${esc(item.telepon)} • ${esc(item.shift)} • ${esc(item.date)}</div></div></div>`;
+      // form
+      const form = document.createElement('div'); form.style.marginTop='8px';
+      form.innerHTML = `<div style="display:flex;gap:8px;flex-wrap:wrap"><select class="status"> <option value="naik armada">Naik Armada</option><option value="tidak respon">Tidak Respon</option><option value="turun oper">Turun Oper</option><option value="turun ijin">Turun (ijin/sakit)</option></select><input class="no-lambung" placeholder="No Lambung (opsional)" style="width:140px" /><input class="team" placeholder="Team stamp (nama)" style="width:140px" /><input class="note" placeholder="Catatan (opsional)" style="flex:1" /><button class="btn save">Simpan</button><button class="btn ghost del">Hapus</button></div>`;
+      div.appendChild(form);
+      // history
+      const histWrap = document.createElement('div'); histWrap.className='history'; histWrap.innerHTML = `<div class="small"><strong>History</strong></div>`;
+      if(item.history && item.history.length>0){ item.history.slice().reverse().forEach(h=>{ const p = document.createElement('div'); p.className='small muted'; p.style.marginTop='6px'; p.textContent = `${format(h.ts)} — ${h.team} — ${h.status}${h.note?(' — '+h.note):''}`; histWrap.appendChild(p); }) } else { const p = document.createElement('div'); p.className='muted small'; p.style.marginTop='6px'; p.textContent='Belum ada history'; histWrap.appendChild(p); }
+      div.appendChild(histWrap);
+
+      wrap.appendChild(div);
+
+      // wire up events
+      const sel = div.querySelector('.status'); const nl = div.querySelector('.no-lambung'); const team = div.querySelector('.team'); const note = div.querySelector('.note'); const saveBtn = div.querySelector('.save'); const delBtn = div.querySelector('.del');
+      sel.value = item.status || 'naik armada'; nl.value = item.no_lambung || '';
+      saveBtn.addEventListener('click', ()=>{
+        const st = sel.value; const no = nl.value.trim(); const t = team.value.trim()||'ISD'; const nt = note.value.trim(); const idx = store.isd.findIndex(x=>x.id===item.id);
+        if(idx===-1) return; store.isd[idx].status = st; store.isd[idx].no_lambung = no; if(!store.isd[idx].history) store.isd[idx].history = [];
+        store.isd[idx].history.push({ ts:new Date().toISOString(), team:t, note:nt, status:st }); save(); renderIsdCards(); renderOffReport(); alert('Tersimpan (ditambah history)'); });
+      delBtn.addEventListener('click', ()=>{ if(!confirm('Hapus item ISD?')) return; store.isd = store.isd.filter(x=>x.id!==item.id); save(); renderIsdCards(); renderOffReport(); });
+    }); }
+
+    document.getElementById('copyIsd').addEventListener('click', ()=>{ if(store.isd.length===0){alert('Kosong');return} const lines=['LIST ISD']; store.isd.forEach((i,idx)=>{ lines.push(`${idx+1}. ${i.nama} - ${i.telepon} - ${i.status} ${i.no_lambung?('(No:'+i.no_lambung+')'):''}`) }); navigator.clipboard.writeText(lines.join('\n')).then(()=>alert('ISD disalin')); });
+    document.getElementById('openAllIsd').addEventListener('click', ()=>{ store.isd.forEach(i=>{ if(i.telepon){ const txt=encodeURIComponent(`Halo ${i.nama}, status Anda: ${i.status}${i.no_lambung?(' No Lambung '+i.no_lambung):''}`); window.open(`https://wa.me/${phoneToWa(i.telepon)}?text=${txt}`,'_blank') } }) });
+    document.getElementById('exportIsd').addEventListener('click', ()=>{ if(store.isd.length===0){alert('Kosong');return} const head='nama,telepon,shift,date,status,no_lambung,history\n'; const rows = store.isd.map(i=>`${quote(i.nama)},${quote(i.telepon)},${quote(i.shift)},${quote(i.date)},${quote(i.status)},${quote(i.no_lambung||'')},"${JSON.stringify(i.history||[]).replace(/"/g,'""')}"`).join('\n'); download('isd.csv', head+rows); });
+
+    function renderOffReport(){ /* optional: derive from isd items with no_lambung set and status naik/turun */ }
+
+    // Manager
+    document.getElementById('genMgr').addEventListener('click', ()=>{
+      const dt = document.getElementById('mgrDate').value||new Date().toISOString().slice(0,10); const subs = store.subs.filter(s=>s.date===dt); const isds = store.isd.filter(i=>i.date===dt);
+      const lines = []; lines.push(`LAPORAN (${format(dt)})`); lines.push(`Substitusi: ${subs.length}`); lines.push(`Naik Armada: ${isds.filter(i=>i.status==='naik armada').length}`); lines.push(`Turun Oper: ${isds.filter(i=>i.status==='turun oper').length}`); lines.push(`Turun Ijin: ${isds.filter(i=>i.status==='turun ijin').length}`); lines.push(`Tidak Respon: ${isds.filter(i=>i.status==='tidak respon').length}`); lines.push(''); lines.push('Detail:'); isds.forEach(i=>lines.push(`${i.nama} - ${i.status} ${i.no_lambung?('(No:'+i.no_lambung+')'):''}`)); document.getElementById('mgrReport').innerHTML = `<pre>${esc(lines.join('\n'))}</pre>`; document.getElementById('exportMgr').onclick = ()=> download(`laporan_${dt}.txt`, lines.join('\n'));
+    });
+
+    // render helpers
+    function renderAll(){ renderDb(); renderSubs(); renderTakeFromAht(); renderIsdCards(); }
+    function format(d){ if(!d) return ''; return new Date(d).toLocaleDateString('id-ID'); }
+    function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
+
+    // init
+    load();
+
+    // small helpers
+    function renderDb(){ renderDbElements(); }
+    function renderDbElements(){ const wrap = document.getElementById('dbTable'); const q=(document.getElementById('dbSearch').value||'').toLowerCase(); if(store.db.length===0){ wrap.innerHTML='<div class="muted">DB kosong</div>'; return } let html='<table><thead><tr><th></th><th>Nama</th><th>HP</th><th>No Lambung</th><th>Status</th></tr></thead><tbody>'; store.db.forEach((d,i)=>{ if(q && !(d.nama||'').toLowerCase().includes(q) && !(d.telepon||'').toLowerCase().includes(q) && !(d.no_lambung||'').toLowerCase().includes(q)) return; html+=`<tr><td><input type="checkbox" class="db-chk" data-idx="${i}" /></td><td>${esc(d.nama)}</td><td><a class="phone" href="https://wa.me/${phoneToWa(d.telepon)}" target="_blank">${esc(d.telepon)}</a></td><td>${esc(d.no_lambung)}</td><td>${esc(d.status)}</td></tr>` }); html+='</tbody></table>'; wrap.innerHTML = html; }
+
+    // alias render functions
+    function renderSubs(){ renderSubs(); } // placeholder to avoid linter warnings
+
+  </script>
+</body>
+</html>
