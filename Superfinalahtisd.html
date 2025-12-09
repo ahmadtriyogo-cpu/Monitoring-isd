@@ -1,0 +1,963 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Aplikasi Substitusi Driver — FINAL</title>
+
+  <style>
+    :root{
+      --bg:#f7fafc;
+      --card:#fff;
+      --accent:#075985;
+      --muted:#6b7280;
+    }
+    *{box-sizing:border-box}
+    body{
+      font-family:Inter, system-ui, Arial;
+      margin:0;
+      background:var(--bg);
+      height:100vh;
+      overflow:hidden;
+    }
+    .app{
+      height:100vh;
+      display:flex;
+      flex-direction:column;
+    }
+    header{
+      padding:14px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+    h1{margin:0;font-size:18px;color:#083c74}
+    nav{
+      padding:10px;
+      display:flex;
+      gap:8px;
+      background:#fff;
+      border-bottom:1px solid #e3e9f2
+    }
+    .tab{
+      padding:8px 12px;
+      border-radius:8px;
+      background:#e6eefc;
+      color:#0b3c91;
+      cursor:pointer;
+      font-size:14px;
+    }
+    .tab.active{
+      background:var(--accent);
+      color:#fff;
+    }
+    .content{
+      flex:1;
+      overflow-y:auto;
+      padding:14px;
+    }
+    .card{
+      background:var(--card);
+      padding:14px;
+      border-radius:10px;
+      margin-bottom:12px;
+      box-shadow:0 1px 4px rgba(0,0,0,0.06)
+    }
+    label{font-size:13px;color:#374151}
+    input,select,textarea,button{font-size:14px}
+    input,select,textarea{
+      padding:8px;
+      border-radius:8px;
+      border:1px solid #e5edf5;
+      width:100%;
+    }
+    .row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .col{flex:1}
+    .btn{
+      background:var(--accent);
+      color:#fff;
+      padding:8px 12px;
+      border:0;
+      border-radius:8px;
+      cursor:pointer;
+      font-size:14px;
+    }
+    .btn.ghost{
+      background:#f3f4f6;
+      color:#111;
+    }
+    .muted{color:var(--muted);font-size:13px}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th,td{
+      padding:8px;
+      border-bottom:1px solid #eef2f6;
+      text-align:left;
+    }
+    .phone{color:var(--accent);text-decoration:none}
+    .isd-card{
+      border:1px solid #e5edf5;
+      padding:12px;
+      border-radius:10px;
+      background:#fff;
+      margin-bottom:10px;
+    }
+    .history{
+      background:#f8fafc;
+      border-left:4px solid #c7f9cc;
+      padding:8px;
+      border-radius:6px;
+      margin-top:10px;
+      font-size:12px;
+    }
+    .small{font-size:12px}
+    pre{white-space:pre-wrap;word-break:break-word}
+    .keg-type {
+      padding:8px;border-radius:8px;border:1px solid #e5edf5;background:#fff;width:160px;
+    }
+    .flex-center { display:flex; align-items:center; gap:8px; }
+  </style>
+</head>
+
+<body>
+<div class="app">
+
+<header>
+  <h1>Aplikasi Substitusi Driver — FINAL</h1>
+</header>
+
+<nav>
+  <div class="tab active" data-tab="aht">AHT</div>
+  <div class="tab" data-tab="isd">ISD</div>
+  <div class="tab" data-tab="mgr">Manager</div>
+</nav>
+
+<div class="content">
+
+<!-- ======================= AHT ======================= -->
+<div id="aht" class="view">
+
+  <div class="card">
+    <h3>AHT — Database & Substitusi</h3>
+  </div>
+
+  <div class="card">
+    <label>Upload CSV Database Driver</label>
+    <input type="file" id="csvIn" accept=".csv" />
+    <div class="row" style="margin-top:10px">
+      <button class="btn" id="loadCsv">Load CSV</button>
+      <button class="btn ghost" id="exportDb">Export DB</button>
+      <button class="btn ghost" id="clearDb">Clear DB</button>
+    </div>
+    <div class="muted small" style="margin-top:8px">Format CSV: nama,telepon,no_lambung,status</div>
+  </div>
+
+  <div class="card">
+    <label>Cari Database</label>
+    <div class="row" style="margin-top:6px">
+      <input id="dbSearch" placeholder="Cari nama, hp, lambung..." />
+      <button class="btn ghost" id="clearSearch">Clear</button>
+    </div>
+    <div id="dbTable" style="margin-top:10px;max-height:250px;overflow:auto"></div>
+  </div>
+
+  <div class="card">
+    <h4>Input Manual Substitusi</h4>
+    <div class="row">
+      <div class="col"><input id="manualName" placeholder="Nama pengganti" /></div>
+      <div style="width:150px"><input id="manualPhone" placeholder="No HP" /></div>
+      <div style="width:150px">
+        <select id="manualShift">
+          <option value="mitra_pagi">Mitra Pagi</option>
+          <option value="mitra_malam">Mitra Malam</option>
+        </select>
+      </div>
+      <div style="width:150px"><input type="date" id="manualDate" /></div>
+    </div>
+
+    <div class="row" style="margin-top:10px;align-items:center">
+      <div class="flex-center">
+        <label style="display:flex;align-items:center;gap:6px">
+          <input type="checkbox" id="addToDb" /> Tambahkan ke database
+        </label>
+      </div>
+      <div style="flex:1"></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn" id="addManual">Tambah Manual</button>
+        <button class="btn ghost" id="clearManual">Bersihkan</button>
+      </div>
+    </div>
+  </div>
+<div class="card">
+    <h4>Update Driver Substitusi</h4>
+    <div class="row">
+      <div style="width:160px"><input type="date" id="subsDate" /></div>
+      <div style="width:150px">
+        <select id="subsShift">
+          <option value="mitra_pagi">Mitra Pagi</option>
+          <option value="mitra_malam">Mitra Malam</option>
+        </select>
+      </div>
+      <button class="btn" id="processChecked">Proses dari DB</button>
+      <button class="btn ghost" id="copySubs">Copy WA</button>
+      <button class="btn ghost" id="openAllSubs">Open WA</button>
+    </div>
+
+    <div id="subsList" style="margin-top:10px"></div>
+
+    <div class="card" style="margin-top:14px">
+      <h4>Feedback ISD</h4>
+      <div id="ahtFeedback"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ======================= ISD ======================= -->
+<div id="isd" class="view" style="display:none">
+
+  <div class="card">
+    <h3>ISD — Tindak Lanjut</h3>
+  </div>
+
+  <div class="card">
+    <h4>Ambil Data dari AHT</h4>
+    <div id="takeFromAht"></div>
+  </div>
+
+  <div class="card">
+    <h4>List ISD</h4>
+    <div id="isdCards"></div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn" id="copyIsd">Copy WA ISD</button>
+      <button class="btn ghost" id="openAllIsd">Open WA</button>
+      <button class="btn ghost" id="exportIsd">Export ISD</button>
+    </div>
+  </div>
+
+  <!-- Kegiatan ISD -->
+  <div class="card">
+    <h4>Kegiatan ISD</h4>
+
+    <div class="row" style="align-items:center">
+      <select id="kegType" class="keg-type">
+        <option value="armada_off">Armada OFF</option>
+        <option value="jadwal_kapal">Jadwal Kapal</option>
+        <option value="oper_bjti">Oper BJTI</option>
+      </select>
+
+      <input id="kegInput1" placeholder="Isi kegiatan (No lambung / jadwal kapal / keterangan)" />
+      <button class="btn" id="addKeg">Tambah</button>
+      <button class="btn ghost" id="exportKeg">Export Kegiatan</button>
+    </div>
+
+    <div id="listKeg" style="margin-top:10px"></div>
+  </div>
+
+</div>
+
+<!-- ======================= MANAGER ======================= -->
+<div id="mgr" class="view" style="display:none">
+
+  <div class="card">
+    <h3>Manager — Rangkuman</h3>
+    <div class="row">
+      <div style="width:150px">
+        <input type="date" id="mgrDate" />
+      </div>
+      <button class="btn" id="genMgr">Generate</button>
+      <button class="btn ghost" id="exportMgr">Export</button>
+      <button class="btn ghost" id="copyMgr">Copy WA</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <pre id="mgrReport"></pre>
+  </div>
+
+</div>
+
+</div> <!-- content end -->
+</div> <!-- app end -->
+
+<script>
+/* ==========================
+   STORAGE & UTILITIES
+========================== */
+
+const KEY="AHT_ISD_STORE_VFINAL";
+let store={ db:[], subs:[], isd:[], kegiatan:[] };
+
+function save(){ localStorage.setItem(KEY, JSON.stringify(store)); }
+function load(){
+  const s=localStorage.getItem(KEY);
+  if(s) store=JSON.parse(s);
+}
+
+/* Utility */
+function uid(){ return Math.random().toString(36).slice(2,9); }
+function esc(s){return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;')}
+
+function phoneToWa(p){
+  if(!p) return '';
+  let s=(p+'').replace(/\D/g,'');
+  if(s.startsWith('0')) s='62'+s.slice(1);
+  if(!s.startsWith('62')) s='62'+s;
+  return s;
+}
+
+function csvToRows(txt){
+  return txt.split(/\r?\n/).map(r=>r.trim()).filter(Boolean)
+           .map(r=>r.split(',').map(c=>c.replace(/^"|"$/g,'').trim()));
+}
+
+function download(name,content){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([content]));
+  a.download=name;
+  a.click();
+}
+
+function formatDate(d){
+  const dt=new Date(d);
+  return dt.toLocaleDateString('id-ID')+" "+dt.toLocaleTimeString('id-ID',{
+    hour:'2-digit',minute:'2-digit'
+  });
+}
+
+/* ==========================
+   TABS
+========================== */
+
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+
+    const tab=t.dataset.tab;
+    document.querySelectorAll('.view').forEach(v=>v.style.display='none');
+    document.getElementById(tab).style.display='block';
+
+    renderAll();
+  });
+});
+
+/* ==========================
+   AHT — DB & SUBSTITUSI
+========================== */
+
+document.getElementById("loadCsv").onclick=()=>{
+  const f=document.getElementById("csvIn").files[0];
+  if(!f) return alert("Pilih file CSV");
+
+  const r=new FileReader();
+  r.onload=()=>{
+    const rows=csvToRows(r.result);
+    store.db = rows.map(r=>({
+      id:uid(),
+      nama:r[0]||"",
+      telepon:r[1]||"",
+      no_lambung:r[2]||"",
+      status:r[3]||""
+    }));
+    save();
+    renderDb();
+    alert("DB berhasil dimuat");
+  };
+  r.readAsText(f);
+};
+
+document.getElementById("exportDb").onclick=()=>{
+  if(!store.db.length) return alert("DB kosong");
+  let head="nama,telepon,no_lambung,status\n";
+  let rows=store.db.map(d=>`${d.nama},${d.telepon},${d.no_lambung},${d.status}`).join("\n");
+  download("db.csv", head+rows);
+};
+
+document.getElementById("clearDb").onclick=()=>{
+  if(confirm("Hapus seluruh DB?")){
+    store.db=[];
+    save();
+    renderDb();
+  }
+};
+
+document.getElementById("dbSearch").oninput=renderDb;
+document.getElementById("clearSearch").onclick=()=>{
+  document.getElementById("dbSearch").value="";
+  renderDb();
+};
+
+function renderDb(){
+  const wrap=document.getElementById("dbTable");
+  const q=(document.getElementById("dbSearch").value||"").toLowerCase();
+
+  if(!store.db.length){
+    wrap.innerHTML="<div class='muted'>DB kosong</div>";
+    return;
+  }
+
+  let html=`<table>
+    <thead>
+      <tr>
+        <th></th><th>Nama</th><th>HP</th><th>Lambung</th><th>Status</th>
+      </tr>
+    </thead>
+    <tbody>`;
+
+  store.db.forEach((d,i)=>{
+    if(q){
+      if(!(d.nama||"").toLowerCase().includes(q)
+      && !(d.telepon||"").toLowerCase().includes(q)
+      && !(d.no_lambung||"").toLowerCase().includes(q)) return;
+    }
+
+    html+=`
+      <tr>
+        <td><input type="checkbox" class="dbchk" data-i="${i}"></td>
+        <td>${esc(d.nama)}</td>
+        <td><a class="phone" href="https://wa.me/${phoneToWa(d.telepon)}" target="_blank">${d.telepon}</a></td>
+        <td>${esc(d.no_lambung)}</td>
+        <td>${esc(d.status)}</td>
+      </tr>`;
+  });
+
+  html+="</tbody></table>";
+  wrap.innerHTML=html;
+}
+
+/* ==========================
+   SUBSTITUSI MANUAL
+========================== */
+
+document.getElementById("addManual").onclick=()=>{
+
+  let nama=document.getElementById("manualName").value.trim();
+  let telp=document.getElementById("manualPhone").value.trim();
+  let shift=document.getElementById("manualShift").value;
+  let date=document.getElementById("manualDate").value || new Date().toISOString().slice(0,10);
+
+  if(!nama || !telp) return alert("Isi data lengkap");
+
+  store.subs.push({
+    id:uid(),
+    nama:nama,
+    telepon:telp,
+    shift:shift,
+    date:date
+  });
+
+  if(document.getElementById("addToDb").checked){
+    store.db.push({
+      id:uid(),
+      nama:nama,
+      telepon:telp,
+      no_lambung:"",
+      status:"manual"
+    });
+  }
+
+  save();
+  renderSubs();
+  renderDb();
+
+  document.getElementById("manualName").value="";
+  document.getElementById("manualPhone").value="";
+  document.getElementById("addToDb").checked=false;
+};
+document.getElementById("clearManual").onclick=()=>{
+  document.getElementById("manualName").value="";
+  document.getElementById("manualPhone").value="";
+};
+
+/* ==========================
+   PROSES DARI DATABASE KE SUBSTITUSI
+========================== */
+
+document.getElementById("processChecked").onclick=()=>{
+  const checks=[...document.querySelectorAll('.dbchk:checked')];
+  if(!checks.length) return alert("Tidak ada yang dicentang");
+
+  let dt=document.getElementById("subsDate").value || new Date().toISOString().slice(0,10);
+  let sh=document.getElementById("subsShift").value;
+
+  checks.forEach(c=>{
+    let d=store.db[c.dataset.i];
+    if(d){
+      store.subs.push({
+        id:uid(),
+        nama:d.nama,
+        telepon:d.telepon,
+        shift:sh,
+        date:dt
+      });
+    }
+  });
+  save();
+  renderSubs();
+};
+
+/* ==========================
+   RENDER SUBSTITUSI
+========================== */
+
+document.getElementById("subsDate").value=new Date().toISOString().slice(0,10);
+
+function renderSubs(){
+  const wrap=document.getElementById("subsList");
+  let dt=document.getElementById("subsDate").value;
+  let sh=document.getElementById("subsShift").value;
+
+  const list=store.subs.filter(s=>s.date===dt && s.shift===sh);
+
+  if(!list.length){
+    wrap.innerHTML="<div class='muted'>Belum ada data</div>";
+    return;
+  }
+
+  let html=`<table>
+    <thead><tr>
+      <th>Nama</th><th>HP</th><th>Mitra</th><th>Tanggal</th><th>Aksi</th>
+    </tr></thead><tbody>`;
+
+  list.forEach(s=>{
+    html+=`
+      <tr>
+        <td>${esc(s.nama)}</td>
+        <td><a class="phone" href="https://wa.me/${phoneToWa(s.telepon)}" target="_blank">${s.telepon}</a></td>
+        <td>${s.shift.replace("_"," ")}</td>
+        <td>${s.date}</td>
+        <td>
+          <button class="btn toIsd" data-id="${s.id}">Kirim ISD</button>
+          <button class="btn ghost editSub" data-id="${s.id}">Edit</button>
+          <button class="btn ghost delSub" data-id="${s.id}">Hapus</button>
+        </td>
+      </tr>`;
+  });
+
+  html+="</tbody></table>";
+  wrap.innerHTML=html;
+
+  /* HAPUS */
+  wrap.querySelectorAll(".delSub").forEach(btn=>{
+    btn.onclick=()=>{
+      if(!confirm("Hapus data ini?")) return;
+      store.subs = store.subs.filter(x=>x.id !== btn.dataset.id);
+      save();
+      renderSubs();
+    };
+  });
+
+  /* EDIT */
+  wrap.querySelectorAll(".editSub").forEach(btn=>{
+    btn.onclick=()=>{
+      let s=store.subs.find(x=>x.id===btn.dataset.id);
+      if(!s) return;
+
+      let nama=prompt("Nama:", s.nama);
+      if(nama===null) return;
+
+      let hp=prompt("HP:", s.telepon);
+      if(hp===null) return;
+
+      let date=prompt("Tanggal (YYYY-MM-DD):", s.date);
+      if(date===null) return;
+
+      let shift=prompt("Mitra (mitra_pagi / mitra_malam):", s.shift);
+      if(shift===null) return;
+
+      s.nama=nama || s.nama;
+      s.telepon=hp || s.telepon;
+      s.date=date || s.date;
+      s.shift=shift || s.shift;
+
+      save();
+      renderSubs();
+    };
+  });
+
+  /* KIRIM ISD */
+  wrap.querySelectorAll(".toIsd").forEach(btn=>{
+    btn.onclick=()=>{
+      let s=store.subs.find(x=>x.id===btn.dataset.id);
+      if(!s) return;
+
+      store.isd.push({
+        id:uid(),
+        nama:s.nama,
+        telepon:s.telepon,
+        shift:s.shift,
+        date:s.date,
+        status:"pending",
+        no_lambung:"",
+        history:[]
+      });
+
+      save();
+      renderIsdCards();
+      alert("Dikirim ke ISD");
+    };
+  });
+}
+
+/* COPY WA SUBSTITUSI */
+document.getElementById("copySubs").onclick=()=>{
+  let dt=document.getElementById("subsDate").value;
+  let sh=document.getElementById("subsShift").value;
+  let list=store.subs.filter(s=>s.date===dt && s.shift===sh);
+
+  if(!list.length) return alert("Tidak ada data");
+
+  let title = sh==="mitra_pagi" ? "MITRA PAGI" : "MITRA MALAM";
+
+  let lines=[`📋 LIST DRIVER SUBSTITUSI — ${title} (${dt})`,` `];
+
+  list.forEach((s,i)=>lines.push(`${i+1}. ${s.nama} — ${s.telepon} — READY`));
+
+  navigator.clipboard.writeText(lines.join("\n"));
+  alert("Disalin ke WA");
+};
+
+/* OPEN SEMUA WA */
+document.getElementById("openAllSubs").onclick=()=>{
+  let dt=document.getElementById("subsDate").value;
+  let sh=document.getElementById("subsShift").value;
+  let list=store.subs.filter(s=>s.date===dt && s.shift===sh);
+
+  list.forEach(s=>{
+    let txt=encodeURIComponent(`Halo ${s.nama}, Anda tercatat READY sebagai ${s.shift.replace("_"," ")} (${s.date})`);
+    window.open(`https://wa.me/${phoneToWa(s.telepon)}?text=${txt}`,'_blank');
+  });
+};
+
+/* ==========================
+   ISD — Render Cards + History
+========================== */
+
+function renderIsdCards(){
+  const wrap=document.getElementById("isdCards");
+  wrap.innerHTML="";
+
+  if(!store.isd.length){
+    wrap.innerHTML="<div class='muted'>Belum ada data</div>";
+    return;
+  }
+
+  store.isd.forEach(i=>{
+    let div=document.createElement("div");
+    div.className="isd-card";
+
+    div.innerHTML=`
+      <div><strong>${esc(i.nama)}</strong></div>
+      <div class="small muted">${i.telepon} • ${i.shift.replace("_"," ")} • ${i.date}</div>
+    `;
+
+    let form=document.createElement("div");
+    form.style.marginTop="10px";
+    form.innerHTML=`
+      <div class="row">
+        <select class="st">
+          <option value="naik armada">Naik Armada</option>
+          <option value="stand by">Stand By</option>
+          <option value="tidak respon">Tidak Respon</option>
+          <option value="turun oper">Turun Oper</option>
+          <option value="turun ijin">Turun (ijin/sakit)</option>
+        </select>
+
+        <input class="nl" placeholder="No Lambung" style="width:120px">
+        <input class="team" placeholder="Petugas" style="width:120px">
+        <input class="note" placeholder="Catatan" style="flex:1">
+
+        <button class="btn save">Simpan</button>
+        <button class="btn ghost delIsd">Hapus</button>
+      </div>
+    `;
+
+    div.appendChild(form);
+
+    let hwrap=document.createElement("div");
+    hwrap.className="history";
+    hwrap.innerHTML="<strong>History</strong><br>";
+
+    if(i.history?.length){
+      i.history.slice().reverse().forEach(h=>{
+        let p=document.createElement("div");
+        p.textContent=`${formatDate(h.ts)} — ${h.team} — ${h.status}${h.note?": "+h.note:""}`;
+        hwrap.appendChild(p);
+      });
+    } else {
+      hwrap.innerHTML+="<div class='muted small'>Belum ada history</div>";
+    }
+
+    div.appendChild(hwrap);
+    wrap.appendChild(div);
+
+    /* SIMPAN */
+    let sel=div.querySelector(".st");
+    let nl=div.querySelector(".nl");
+    let tm=div.querySelector(".team");
+    let nt=div.querySelector(".note");
+
+    sel.value=i.status;
+    nl.value=i.no_lambung || "";
+
+    div.querySelector(".save").onclick=()=>{
+      let idx=store.isd.findIndex(x=>x.id===i.id);
+      store.isd[idx].status=sel.value;
+      store.isd[idx].no_lambung=nl.value;
+
+      store.isd[idx].history.push({
+        ts:new Date().toISOString(),
+        team:tm.value || "ISD",
+        status:sel.value,
+        note:nt.value || ""
+      });
+
+      save();
+      renderIsdCards();
+      renderAhtFeedback();
+
+      alert("Tersimpan");
+    };
+
+    /* HAPUS */
+    div.querySelector(".delIsd").onclick=()=>{
+      if(!confirm("Hapus data ini?")) return;
+      store.isd = store.isd.filter(x=>x.id!==i.id);
+      save();
+      renderIsdCards();
+      renderAhtFeedback();
+    };
+  });
+}
+
+/* COPY WA ISD */
+document.getElementById("copyIsd").onclick=()=>{
+  if(!store.isd.length) return alert("Tidak ada data");
+
+  const today=new Date().toLocaleDateString("id-ID");
+  let lines=[`📋 *LAPORAN ISD — ${today}*`,` `];
+
+  store.isd.forEach((i,x)=>{
+    let last=i.history?.[i.history.length-1];
+    let ts= last ? formatDate(last.ts) : "-";
+
+    lines.push(`${x+1}. *${i.nama}*`);
+    lines.push(`   • HP: ${i.telepon}`);
+    lines.push(`   • Status: ${i.status.toUpperCase()}${i.no_lambung?(" — No:"+i.no_lambung):""}`);
+    lines.push(`   • Update: ${ts}`);
+    if(last?.note) lines.push(`   • Catatan: ${last.note}`);
+    lines.push("");
+  });
+
+  navigator.clipboard.writeText(lines.join("\n"));
+  alert("Disalin ke clipboard");
+};
+
+/* OPEN ALL WA ISD */
+document.getElementById("openAllIsd").onclick=()=>{
+  store.isd.forEach(i=>{
+    let t=encodeURIComponent(`Status terbaru: ${i.status}${i.no_lambung?(" — No "+i.no_lambung):""}`);
+    window.open(`https://wa.me/${phoneToWa(i.telepon)}?text=${t}`,'_blank');
+  });
+};
+
+/* EXPORT CSV ISD */
+document.getElementById("exportIsd").onclick=()=>{
+  let head="nama,telepon,mitra,date,status,no_lambung\n";
+  let rows=store.isd.map(i=>`${i.nama},${i.telepon},${i.shift},${i.date},${i.status},${i.no_lambung}`);
+  download("isd.csv", head+rows.join("\n"));
+};
+
+/* ==========================
+   KEGIATAN ISD
+========================== */
+
+document.getElementById("addKeg").onclick=()=>{
+  let t=document.getElementById("kegType").value;
+  let val=document.getElementById("kegInput1").value.trim();
+  if(!val) return alert("Isi kegiatan terlebih dahulu");
+
+  store.kegiatan.push({
+    id:uid(),
+    type:t,
+    isi:val,
+    date:new Date().toISOString().slice(0,10)
+  });
+
+  save();
+  renderKegiatan();
+  document.getElementById("kegInput1").value="";
+};
+
+document.getElementById("exportKeg").onclick=()=>{
+  if(!store.kegiatan.length) return alert("Belum ada kegiatan");
+  let head="id,type,isi,date\n";
+  let rows=store.kegiatan.map(k=>`${k.id},${k.type},${k.isi},${k.date}`);
+  download("kegiatan_isd.csv", head+rows.join("\n"));
+};
+
+function renderKegiatan(){
+  let wrap=document.getElementById("listKeg");
+  wrap.innerHTML="";
+
+  if(!store.kegiatan.length){
+    wrap.innerHTML="<div class='muted'>Belum ada kegiatan</div>";
+    return;
+  }
+
+  store.kegiatan.forEach(k=>{
+    let div=document.createElement("div");
+    div.className="isd-card";
+
+    let label =
+      k.type==="armada_off" ? "ARMADA OFF" :
+      k.type==="jadwal_kapal" ? "JADWAL KAPAL" : "OPER BJTI";
+
+    div.innerHTML=`
+      <strong>${label}</strong><br>
+      <span class="small muted">${k.date}</span>
+      <div style="margin-top:6px">${esc(k.isi)}</div>
+      <button class="btn ghost delKeg" data-id="${k.id}" style="margin-top:6px">Hapus</button>
+    `;
+
+    wrap.appendChild(div);
+  });
+
+  wrap.querySelectorAll(".delKeg").forEach(b=>{
+    b.onclick=()=>{
+      store.kegiatan = store.kegiatan.filter(x=>x.id!==b.dataset.id);
+      save();
+      renderKegiatan();
+    };
+  });
+}
+
+/* ==========================
+   FEEDBACK AHT
+========================== */
+
+function renderAhtFeedback(){
+  const wrap=document.getElementById("ahtFeedback");
+  wrap.innerHTML="";
+
+  let dt=document.getElementById("subsDate").value;
+  let sh=document.getElementById("subsShift").value;
+
+  const items=store.isd.filter(i=>i.date===dt && i.shift===sh);
+
+  if(!items.length){
+    wrap.innerHTML="<div class='muted'>Belum ada feedback</div>";
+    return;
+  }
+
+  let html=`<table>
+    <thead><tr><th>Nama</th><th>Status</th><th>No</th><th>Update</th></tr></thead>
+    <tbody>`;
+
+  items.forEach(i=>{
+    let last=i.history?.[i.history.length-1];
+    let ts= last ? formatDate(last.ts) : "-";
+
+    html+=`
+      <tr>
+        <td>${i.nama}</td>
+        <td>${i.status}</td>
+        <td>${i.no_lambung||""}</td>
+        <td>${ts}</td>
+      </tr>`;
+  });
+
+  html+="</tbody></table>";
+  wrap.innerHTML=html;
+}
+
+/* ==========================
+   MANAGER REKAP
+========================== */
+
+document.getElementById("genMgr").onclick=()=>{
+  const dt=document.getElementById("mgrDate").value;
+
+  const pagi = store.subs.filter(s=>s.date===dt && s.shift==="mitra_pagi");
+  const malam = store.subs.filter(s=>s.date===dt && s.shift==="mitra_malam");
+
+  const isds = store.isd.filter(i=>i.date===dt);
+
+  const armada_off = store.kegiatan.filter(k=>k.date===dt && k.type==="armada_off");
+  const kegiatan_lain = store.kegiatan.filter(k=>k.date===dt && k.type!=="armada_off");
+
+  let out = [];
+
+  out.push(`📊 *REKAP MANAGER — ${dt}*`);
+  out.push("");
+
+  out.push("*Mitra Pagi*");
+  if(!pagi.length) out.push("- Tidak ada");
+  pagi.forEach((s,i)=> out.push(`${i+1}. ${s.nama} — ${s.telepon}`));
+  out.push("");
+
+  out.push("*Mitra Malam*");
+  if(!malam.length) out.push("- Tidak ada");
+  malam.forEach((s,i)=> out.push(`${i+1}. ${s.nama} — ${s.telepon}`));
+  out.push("");
+
+  out.push("*Status Driver (ISD)*");
+  if(!isds.length) out.push("- Tidak ada");
+  isds.forEach((i,x)=> out.push(`${x+1}. ${i.nama} — ${i.status}${i.no_lambung?(" — No:"+i.no_lambung):""}`));
+  out.push("");
+
+  out.push("*Armada OFF*");
+  if(!armada_off.length) out.push("- Tidak ada");
+  armada_off.forEach((a,y)=> out.push(`${y+1}. ${a.isi}`));
+  out.push("");
+
+  out.push("*Kegiatan Lainnya*");
+  if(!kegiatan_lain.length) out.push("- Tidak ada");
+  kegiatan_lain.forEach((k,z)=> out.push(`${z+1}. [${k.type}] ${k.isi}`));
+  out.push("");
+
+  out.push("*Resume:*");
+  out.push(`• Mitra Pagi: ${pagi.length}`);
+  out.push(`• Mitra Malam: ${malam.length}`);
+  out.push(`• ISD Update: ${isds.length}`);
+  out.push(`• Armada OFF: ${armada_off.length}`);
+  out.push("");
+
+  document.getElementById("mgrReport").textContent = out.join("\n");
+};
+
+document.getElementById("exportMgr").onclick=()=>{
+  let txt=document.getElementById("mgrReport").textContent;
+  download("laporan_manager.txt", txt);
+};
+
+document.getElementById("copyMgr").onclick=()=>{
+  let txt=document.getElementById("mgrReport").textContent;
+  navigator.clipboard.writeText(txt);
+  alert("Disalin ke clipboard");
+};
+
+/* ==========================
+   START RENDER
+========================== */
+
+function renderAll(){
+  renderDb();
+  renderSubs();
+  renderTakeFromAht();
+  renderIsdCards();
+  renderAhtFeedback();
+  renderKegiatan();
+}
+
+load();
+renderAll();
+
+</script>
+
+</body>
+</html>
